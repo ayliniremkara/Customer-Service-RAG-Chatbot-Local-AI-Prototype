@@ -54,7 +54,6 @@ Build the core chatbot logic:
 
 **Framework:** Use **LangChain / LangGraph** as your framework.
 
-> Please explain in your README **why** you made your key technical decisions (chunk size, embedding model, retrieval strategy, etc.).
 
 ### A3 – Chat Interface
 
@@ -93,30 +92,6 @@ The goal is to show that you understand not just **how** to build this, but **wh
 | **Business Perspective** | Ability to frame the technical solution in business terms — impact on customer experience, operational efficiency, and strategic value. |
 | **Technical Understanding** | Solid grasp of RAG concepts, LLM fundamentals, and the end-to-end pipeline. |
 | **Communication** | Presenting to a mixed audience — making it accessible for business stakeholders while staying precise for engineers. |
-
----
-
-## Project Structure
-
-```
-rag-chatbot/
-├── README.md
-├── requirements.txt
-├── .env.example
-├── data/
-│   └── knowledge_base/
-│       ├── doc_01_vehicle_features.txt
-│       ├── doc_02_service_maintenance.txt
-│       ├── ...
-├── src/
-│   ├── config.py
-│   ├── document_loader.py
-│   ├── vector_store.py
-│   ├── rag_chain.py
-│   └── app.py
-└── presentation/
-    └── case_study.pptx
-```
 
 ---
 
