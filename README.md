@@ -10,7 +10,7 @@
 | **Deliverables** | Part A: GitHub Repository (Code) · Part B: Presentation (max. 20 minutes) |
 | **Language** | English |
 | **Start Date** | Friday, 27.02.2026 |
-| **Deadline** | Tuesday, 03.03.2026, 23:59´ — all commits pushed to a **public** GitHub repository |
+| **Deadline** | Tuesday, 03.03.2026, 23:59 — all commits pushed to a **public** GitHub repository |
 
 ---
 
