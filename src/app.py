@@ -6,6 +6,10 @@ Run with: streamlit run src/app.py
 """
 
 import streamlit as st
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+from rag_chain import build_rag_chain, get_sources
 
 
 # ──────────────────────────────────────────────
@@ -70,9 +74,19 @@ def get_bot_response(query: str, top_k: int) -> tuple[str, list[str]]:
         sources = [doc.metadata["source"] for doc in result["source_documents"]]
         return answer, sources
     """
-    answer = "⚠️ RAG pipeline not yet implemented. Connect your chain in `get_bot_response()`!"
-    sources = []
+
+    chain, retriever = build_rag_chain(top_k=top_k)
+
+    # Get docs for sources
+    docs = retriever.invoke(query)
+    sources = get_sources(docs)
+
+    # Get answer (chain returns a STRING)
+    answer = chain.invoke({"question": query})
+
     return answer, sources
+
+
 
 
 # ──────────────────────────────────────────────

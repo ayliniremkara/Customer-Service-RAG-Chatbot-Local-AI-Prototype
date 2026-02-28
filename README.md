@@ -1,115 +1,100 @@
-# Case Study: AI Engineer Intern – Customer Journey Analytics & Data Science
+# 🚗 Customer Service RAG Chatbot — Local AI Prototype
 
----
+## 📖 Table of Contents
+- [Overview](#overview)
+- [Project Structure](#project-structure)
+- [Key Components](#key-components)
+  - [Data Ingestion Pipeline](#data-ingestion-pipeline)
+  - [RAG Chain](#rag-chain)
+  - [Streamlit App](#streamlit-app)
+- [Setup Instructions](#setup-instructions)
+  - [Installation](#installation)
+  - [Running the Application](#running-the-application)
+  - [Usage](#usage)
+- [Knowledge Base](#knowledge-base)
+- [Acknowledgments](#acknowledgments)
 
-## Overview
+## 💻 Overview
 
-| Topic | Details |
-|---|---|
-| **Position** | Intern AI Engineer – Customer Journey Analytics & Data Science |
-| **Deliverables** | Part A: GitHub Repository (Code) · Part B: Presentation (max. 20 minutes) |
-| **Language** | English |
-| **Start Date** | Friday, 27.02.2026 |
-| **Deadline** | Tuesday, 03.03.2026, 23:59 — all commits pushed to a **public** GitHub repository |
+This project implements a **local AI-powered customer service chatbot** using a Retrieval-Augmented Generation (RAG) pipeline. 
+It is designed to assist users with questions about vehicle features, maintenance, warranty, ordering process, electric vehicles and customer support.
 
----
+## ⭐️ Key Features
 
-## Context & Scenario
+- Runs fully locally (external APIs not used)
+- Uses [Ollama](https://ollama.com/) for LLM and embeddings
+- Vector search with [ChromaDB](https://www.trychroma.com/)
+- RAG architecture supported with the knowledge base
+- [Streamlit](https://streamlit.io/) chat interface
+- Displays source documents alongside answers for transparency
 
-You are joining the **Customer Journey Analytics & Data Science** team at a large automotive company. The team is responsible for data-driven analysis and optimization of digital customer channels – including websites, vehicle configurators, and service portals.
+## 🧩 Key Components
 
-Every day, the company receives hundreds of customer inquiries. Many relate to recurring topics: vehicle features, service schedules, warranty terms, or ordering processes. This information already exists in internal knowledge bases but is not always easy to find.
+### Data Ingestion Pipeline
+- **File**: `src/data_ingestion.py`
+- **Purpose**: Loads input files from the `knowledge_base` directory, splits them into chunks, generates embeddings, and stores them in a ChromaDB vector store.
 
-**Your task:** Build a prototype of a **local AI-powered chatbot** that answers customer questions based on a provided knowledge base. The chatbot should use **Retrieval-Augmented Generation (RAG)** to find relevant documents and generate natural language answers.
+### RAG Chain
+- **File**: `src/rag_chain.py`
+- **Purpose**: Implements the RAG chain, including retrieving relevant chunks from the vector store and generating answers using a language model.
 
-> **Important:** The focus is on **technical implementation, architecture, and your decision-making process**, not on answer quality. Since the prototype runs locally, we understand there are CPU/GPU constraints. Lightweight models are perfectly fine. We want to see that you understand the concepts and can explain **why** you chose what you chose.
+### Streamlit App
+- **File**: `src/app.py`
+- **Purpose**: Provides a user interface for interacting with the chatbot. Users can ask questions, and the chatbot retrieves relevant information and generates answers.
 
----
+## ⚙️ Setup Instructions
 
-## Part A: Technical Implementation
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/ayliniremkara/Customer-Service-RAG-Chatbot-Local-AI-Prototype.git
+   ```
+2. **Navigate to the project directory:**
+   ```bash
+   cd 2026---AI-Engineering-Case-Study
+   ```
+3. **Create and activate a virtual environment (recommended):**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate       
+   ```
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. **Install Ollama and pull the required models:**
+   ```bash
+   curl -fsSL https://ollama.com/install.sh | sh
+   ollama pull llama3.2
+   ollama pull nomic-embed-text
+   ```
+5. **Run the data ingestion pipeline to create embeddings and stores them in ChromaDb:**
+   ```bash
+   python src/data_ingestion_pipeline.py
+   ```
+6. **Start Customer Service Chatbot:**
+   ```bash
+   streamlit run src/app.py      
+   ```
 
-### A1 – Setup & Knowledge Base
+## 📚 Knowledge Base
+The knowledge base is located in `data/knowledge_base/` and contains the following documents:
 
-1. **Set up a local LLM** using [Ollama](https://ollama.ai):
-   - A **Chat model** — a lightweight model works
-   - An **Embedding model**
-2. Use the provided documents in `data/knowledge_base/`
-3. Implement a **Document Ingestion Pipeline**:
-   - Load and process documents
-   - Generate embeddings using your chosen Ollama embedding model
-   - Store embeddings in a **Vector Store** — we recommend [ChromaDB](https://docs.trychroma.com/) for simplicity, but you may use alternatives
-
-### A2 – Implement RAG Pipeline
-
-Build the core chatbot logic:
-
-1. **Retrieval:** For a user query, retrieve the most relevant chunks via similarity search
-2. **Augmentation:** Inject the retrieved context into a prompt
-3. **Generation:** The chat model generates an answer based on the context
-
-**Requirements:**
-- Number of retrieved chunks should be configurable (Top-K)
-- System prompt should instruct the model to answer based on provided context
-- Sources (document titles) should be referenced in the answer
-
-**Framework:** Use **LangChain / LangGraph** as your framework.
+- `doc_01_vehicle_features.txt`: Vehicle Features & Configuration Options
+- `doc_02_service_maintenance.txt`: After-Sales Service
+- `doc_03_warranty.txt`: Warranty Coverage
+- `doc_04_ordering_process.txt`: Ordering Process
+- `doc_05_electric_vehicles.txt`: Electric Vehicles & Charging
+- `doc_06_customer_support.txt`: Customer Support Channels
 
 
-### A3 – Chat Interface
+To extend the knowledge base, add new `.txt` files to `data/knowledge_base/` directory. Before re-running, clear the existing ChromaDB collection to avoid duplicate entries:
+```bash
+rm -rf data/chroma_db
+python src/data_ingestion.py
+```
 
-Build a simple chat interface (e.g. using **Streamlit**):
-
-- Input field for queries
-- Display of chatbot response
-- Display of source documents used
-- Chat history within a session
-
-### A4 – Documentation
-
-Make sure to properly document your code.
-
----
-
-## Part B: Presentation
-
-Create a **presentation (max. 20 minutes)** for a **mixed audience** — both business stakeholders and technical team members should be able to follow along.
-
-The goal is to show that you understand not just **how** to build this, but **why** it matters and where it could go from here.
-
-### What we'd like to see:
-
-- **Business perspective:** What problem does an AI chatbot solve? Why is this relevant for an automotive company? What value does it create?
-- **Solution & Architecture:** High-level overview of your RAG architecture. Why RAG (vs. other approaches)? Explain your key technical decisions and trade-offs.
-- **Demo & Results:** Show your prototype in action (screenshots or preferably **live demo**). What works well, what are the limitations?
-- **Roadmap:** Where could this go next? How would you scale this to production? What would change (models, infrastructure, integrations)? What further use cases do you see?
-- **Summary & Q&A**
-
-### Evaluation Criteria
-
-| Criterion | What we look for |
-|---|---|
-| **Reasoning & Decision-Making** | Clear rationale for technical choices (model, chunk size, retrieval strategy, etc.). We want to understand *why*, not just *what*. |
-| **Business Perspective** | Ability to frame the technical solution in business terms — impact on customer experience, operational efficiency, and strategic value. |
-| **Technical Understanding** | Solid grasp of RAG concepts, LLM fundamentals, and the end-to-end pipeline. |
-| **Communication** | Presenting to a mixed audience — making it accessible for business stakeholders while staying precise for engineers. |
-
----
-
-## How to Submit
-
-1. Click **"Use this template"** → **"Create a new repository"** on this GitHub page
-2. Create your own **public** repository from this template
-3. Work in your own repo — commit and push your code as you go (Make sure to also push the ppt!)
-4. When you're done, share the **link to your repository** with us
-5. **All commits must be pushed before the deadline** — late submissions will not be considered
-
----
-
-## Tips
-
-- **Prioritize a working end-to-end pipeline** over perfection in any single component.
-- **Use small models** (1B–4B params). Answer quality is secondary. We evaluate your implementation and understanding.
-- **Explain your decisions** — we want to understand your thought process.
-- A basic **Streamlit app template** is provided in `src/app.py` — you can use it as a starting point or build your own from scratch.
-
-**Good luck!**
+## 💡 Acknowledgments
+- [LangChain](https://www.langchain.com) framework for building agents and LLM-powered applications. 
+- [Streamlit](https://streamlit.io/) for the interactive user interface.
+- [Ollama](https://ollama.com/) — local LLM inference and embeddings.
+- [ChromaDB](https://docs.trychroma.com/docs/overview/introduction) lightweight and persistent vector database.
