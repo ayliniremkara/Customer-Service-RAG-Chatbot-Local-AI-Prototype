@@ -2,17 +2,14 @@
 
 ## 📖 Table of Contents
 - [Overview](#overview)
-- [Project Structure](#project-structure)
+- [Key Features](#key-features)
 - [Key Components](#key-components)
   - [Data Ingestion Pipeline](#data-ingestion-pipeline)
   - [RAG Chain](#rag-chain)
   - [Streamlit App](#streamlit-app)
-- [Setup Instructions](#setup-instructions)
-  - [Installation](#installation)
-  - [Running the Application](#running-the-application)
-  - [Usage](#usage)
-- [Knowledge Base](#knowledge-base)
-- [Acknowledgments](#acknowledgments)
+- [Setup Instructions](#️-setup-instructions)
+- [Knowledge Base](#-knowledge-base)
+- [Acknowledgement](#-acknowledgement)
 
 ## 💻 Overview
 
