@@ -93,7 +93,7 @@ rm -rf data/chroma_db
 python src/data_ingestion_pipeline.py
 ```
 
-## 💡 Acknowledgments
+## 💡 Acknowledgement
 - [LangChain](https://www.langchain.com) framework for building agents and LLM-powered applications. 
 - [Streamlit](https://streamlit.io/) for the interactive user interface.
 - [Ollama](https://ollama.com/) — local LLM inference and embeddings.
