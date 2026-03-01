@@ -2,32 +2,28 @@
 RAG Pipeline
 ----------------------------
 Loads persisted ChromaDB, retrieves Top-K chunks, and generates an answer using Ollama.
+question -> retrieve ->  build context ->  prompt -> LLM -> answer
 """
 
 from pathlib import Path
-from operator import itemgetter
+from langchain_ollama import OllamaEmbeddings, ChatOllama
+from langchain_chroma import Chroma
+from langchain_core.messages import SystemMessage, HumanMessage
 
-from pathlib import Path 
-from langchain_community.vectorstores import Chroma 
-from langchain_community.embeddings import OllamaEmbeddings 
-from langchain_community.chat_models import ChatOllama 
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+PERSIST_DIR = Path("data/chroma_db") #ChromaDB persistence directory where embeddings are stored
 
-BASE_DIR    = Path(__file__).parent.parent
-PERSIST_DIR = str(BASE_DIR / "data" / "chroma_db")
+EMBEDDING_MODEL = "nomic-embed-text" #Embedding model used to vectorize documents and queries
+CHAT_MODEL      = "llama3.2"         #LLM used for generating answers based on retrieved context
+COLLECTION_NAME = "knowledge_base"   #Vector store collection name 
+TEMPERATURE     = 0.1                #Settings for the LLM to control randomness in answer generation
 
-EMBEDDING_MODEL = "nomic-embed-text"
-CHAT_MODEL      = "llama3.2"
-COLLECTION_NAME = "knowledge_base"
-TEMPERATURE     = 0.1
-
-SYSTEM_PROMPT = """You are a chatbot that answers using the provided context.
-If the answer is not in the context, say: "I don't have information about that."
+SYSTEM_PROMPT = """You are an customer chatbot at a large automotive company.
+You are an expert in answering questions using the provided context. 
+Always include sources. If the answer is not in the context, say: "Sorry, I don't have information about this question."
 """
 
 def load_vectorstore():
+    """Load vector store to be used for retrieval task"""
     embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL)
     vectorstore = Chroma(
         persist_directory=PERSIST_DIR,
@@ -36,47 +32,51 @@ def load_vectorstore():
     )
     return vectorstore
 
+class RAGChain:
+    """RAGChain class to handle the retrieval and generation process"""
+    def __init__(self, retriever, llm):
+        self.retriever = retriever
+        self.llm = llm
 
-def format_docs(docs):
-    formatted = []
-    for doc in docs:
-        source = Path(doc.metadata.get("source", "unknown")).stem
-        formatted.append(f"[Source: {source}]\n{doc.page_content}")
-    return "\n\n---\n\n".join(formatted)
+    def invoke(self, inputs: dict) -> dict:
+        """Invoke the RAG chain with a question input. Returns a dict with the answer and source documents"""
+        question = inputs["question"]
+        docs = self.retriever.invoke(question)
+        
+        #If no relevant documents are found, return a default answer 
+        if not docs: 
+            return {
+                "answer": "Sorry, I don't have information about this question. Please contact our support team.",
+                "source_documents": []
+            }
+        
+        texts = []
+        for doc in docs:
+            source_name = Path(doc.metadata['source']).stem     #Without file extension for cleaner display 
+            text = f"Source: {source_name}\n{doc.page_content}" 
+            texts.append(text) 
+        context = "\n\n".join(texts)
 
+        #Create LLM prompt 
+        messages = [
+            SystemMessage(content=SYSTEM_PROMPT),
+            HumanMessage(
+                content=f"Context:\n{context}\n\nQuestion: {question}"
+            )
+        ]
+        response = self.llm.invoke(messages)
 
-def get_sources(docs):
-    sources = []
-    for doc in docs:
-        source = Path(doc.metadata.get("source", "unknown")).stem
-        if source not in sources:
-            sources.append(source)
-    return sources
-
+        #Return dictionary with answer and sources to be displayed in the Streamlit App
+        return {
+            "answer": response.content,
+            "source_documents": [
+                Path(doc.metadata["source"]).stem for doc in docs
+            ]
+        }
 
 def build_rag_chain(top_k: int):
+    """Build the RAG chain by loading the vector store, creating a retriever, and initializing the LLM"""
     vector_store = load_vectorstore()
-
     retriever = vector_store.as_retriever(search_kwargs={"k": top_k})
-
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", SYSTEM_PROMPT + "\n\nContext:\n{context}"),
-        ("human", "{question}"),
-    ])
-
     llm = ChatOllama(model=CHAT_MODEL, temperature=TEMPERATURE)
-
-    # IMPORTANT:
-    # - We expect input like {"question": "..."}.
-    # - itemgetter("question") extracts the actual query string.
-    chain = (
-        {
-            "context": itemgetter("question") | retriever | format_docs,
-            "question": itemgetter("question"),
-        }
-        | prompt
-        | llm
-        | StrOutputParser()
-    )
-
-    return chain, retriever
+    return RAGChain(retriever, llm)

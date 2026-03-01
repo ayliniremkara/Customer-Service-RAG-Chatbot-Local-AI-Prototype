@@ -9,8 +9,24 @@ import streamlit as st
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
-from rag_chain import build_rag_chain, get_sources
+from rag_chain import build_rag_chain
+import random
+from langchain_core.messages import HumanMessage, AIMessage
 
+@st.cache_resource
+def get_cached_chain(top_k: int):
+    """Initialize the RAG chain and cache it to avoid reloading on every interaction"""
+    return build_rag_chain(top_k)
+
+# Greetings to be randomly choosen when the app is first loaded
+GREETINGS = [
+    "Hello, I'm your AI Assistant. How can I help you today?",
+    "Hi there, I'm here to assist you with any questions you may have.",
+    "Welcome! I'm your AI Assistant. What would you like to know?",
+    "Hello! I can help with vehicles, services, or warranty information.",
+    "Hi, feel free to ask me anything about our products or services.",
+    "Hello, how can I assist you today?",
+]
 
 # ──────────────────────────────────────────────
 # UI Components
@@ -28,6 +44,11 @@ def render_sidebar() -> dict:
             value=3,
             help="How many document chunks to retrieve per query.",
         )
+
+        st.divider()
+        st.markdown("**Models**")
+        st.markdown("- Chat model: `llama3.2`")
+        st.markdown("- Embedding model: `nomic-embed-text`")
 
         st.divider()
         st.markdown("**How it works**")
@@ -48,7 +69,7 @@ def render_message(message: dict) -> None:
             with st.expander("📄 Sources"):
                 for source in message["sources"]:
                     st.markdown(f"- {source}")
-
+                    
 
 def render_chat_history() -> None:
     """Display all messages stored in session state."""
@@ -57,35 +78,12 @@ def render_chat_history() -> None:
 
 
 def get_bot_response(query: str, top_k: int) -> tuple[str, list[str]]:
-    """
-    Generate a chatbot response for the given query.
-
-    TODO: Replace this placeholder with your RAG pipeline.
-    Your implementation should:
-      1. Retrieve relevant chunks from the vector store (use top_k)
-      2. Pass the retrieved context + query to the LLM
-      3. Return the answer and a list of source document titles
-
-    Example:
-        from rag_chain import get_rag_chain
-        chain = get_rag_chain(top_k=top_k)
-        result = chain.invoke({"question": query})
-        answer = result["answer"]
-        sources = [doc.metadata["source"] for doc in result["source_documents"]]
-        return answer, sources
-    """
-
-    chain, retriever = build_rag_chain(top_k=top_k)
-
-    # Get docs for sources
-    docs = retriever.invoke(query)
-    sources = get_sources(docs)
-
-    # Get answer (chain returns a STRING)
-    answer = chain.invoke({"question": query})
+    chain = get_cached_chain(top_k=top_k)
+    response = chain.invoke({"question": query})
+    answer = response["answer"]
+    sources = response["source_documents"]
 
     return answer, sources
-
 
 
 
@@ -108,7 +106,10 @@ def main():
 
     # Session state
     if "messages" not in st.session_state:
-        st.session_state.messages = []
+        greeting = random.choice(GREETINGS)
+        st.session_state.messages = [
+            {"role": "assistant", "content": greeting}
+        ]
 
     render_chat_history()
 

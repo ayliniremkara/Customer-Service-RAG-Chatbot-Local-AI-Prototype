@@ -16,7 +16,7 @@
 
 ## 💻 Overview
 
-This project implements a **local AI-powered customer service chatbot** using a Retrieval-Augmented Generation (RAG) pipeline. 
+This project implements a **local AI-powered customer service chatbot** using a Retrieval-Augmented Generation (RAG) pipeline at a large automotive company. 
 It is designed to assist users with questions about vehicle features, maintenance, warranty, ordering process, electric vehicles and customer support.
 
 ## ⭐️ Key Features
@@ -31,7 +31,7 @@ It is designed to assist users with questions about vehicle features, maintenanc
 ## 🧩 Key Components
 
 ### Data Ingestion Pipeline
-- **File**: `src/data_ingestion.py`
+- **File**: `src/data_ingestion_pipeline.py`
 - **Purpose**: Loads input files from the `knowledge_base` directory, splits them into chunks, generates embeddings, and stores them in a ChromaDB vector store.
 
 ### RAG Chain
@@ -90,7 +90,7 @@ The knowledge base is located in `data/knowledge_base/` and contains the followi
 To extend the knowledge base, add new `.txt` files to `data/knowledge_base/` directory. Before re-running, clear the existing ChromaDB collection to avoid duplicate entries:
 ```bash
 rm -rf data/chroma_db
-python src/data_ingestion.py
+python src/data_ingestion_pipeline.py
 ```
 
 ## 💡 Acknowledgments
