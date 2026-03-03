@@ -5,20 +5,40 @@ Reads .txt files in the knowledge base folder, splits them into chunks,
 creates embeddings with an Ollama embedding model, and stores them in ChromaDB.
 """
 
-import os
+import os, shutil
 from pathlib import Path
 from langchain_community.document_loaders import TextLoader, DirectoryLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter #Allows defining specific separators 
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
+from langchain_core.documents import Document
 
-KB_DIR = Path("data/knowledge_base") #Knowledge base embeddings storage 
-PERSIST_DIR = Path("data/chroma_db") #ChromaDB persistence directory where embeddings are stored
-EMBEDDING_MODEL = "nomic-embed-text" #Embedding model used to vectorize documents and queries
-COLLECTION_NAME = "knowledge_base"   #Vector store collection name
 
-CHUNK_SIZE = 2000                    #Adjust based on the average length of documents
-CHUNK_OVERLAP = 200                  #Adjust according to how much context to retain between chunks
+BASE_DIR = Path(__file__).parent.parent  #repo root
+
+KB_DIR = BASE_DIR / "data" / "knowledge_base" #Knowledge base embeddings storage 
+PERSIST_DIR = BASE_DIR / "data" / "chroma_db"  #ChromaDB persistence directory where embeddings are stored
+EMBEDDING_MODEL = "nomic-embed-text"    #Embedding model used to vectorize documents and queries
+COLLECTION_NAME = "knowledge_base"      #Vector store collection name
+
+CHUNK_SIZE = 500                    #Adjust based on the average length of documents
+CHUNK_OVERLAP = 20                  #Adjust according to how much context to retain between chunks
+
+
+def extract_metadata(content: str):
+    """Extract title and category from TXT format"""
+    lines = content.strip().split("\n")
+    metadata = {}
+    
+    for line in lines[:2]:
+        line = line.strip()
+        if line.startswith("Title:"):
+            metadata["title"] = line.replace("Title:", "").strip()
+        elif line.startswith("Category:"):
+            metadata["category"] = line.replace("Category:", "").strip()
+    
+    return metadata
+
 
 def load_documents(docs_path: str):
     """Load documents from the knowledge base directory"""
@@ -33,7 +53,14 @@ def load_documents(docs_path: str):
         loader_cls=TextLoader,
         loader_kwargs={"encoding": "utf-8"}
     )
-    documents = loader.load()
+    raw_documents = loader.load()
+
+    documents = []
+    for doc in raw_documents:
+        extra_meta = extract_metadata(doc.page_content)
+        doc.metadata.update(extra_meta)  # Merge into existing metadata
+        documents.append(doc)
+
     print(f"Loaded {len(documents)} documents.")
     return documents
 
@@ -42,9 +69,23 @@ def split_documents(documents, chunk_size: int, chunk_overlap: int):
     print("Splitting documents into chunks with overlap...")
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap
+        chunk_overlap=chunk_overlap,
+        separators=[
+            "\n\n",               # Section breaks (Charging Options:, Battery Technology:)
+            "\n",                 # Bullet points and lines
+            ". ",                 # End of sentences
+            " ",                  # Words
+            ""                    # Characters (last resort)
+        ],
+        keep_separator=True       # Preserve bullet points and section headers
     )
+
     chunks = text_splitter.split_documents(documents)
+    for i, chunk in enumerate(chunks[:50]): 
+        print("-------------")
+        print(f"Metadata: ", chunk.metadata)
+        print("----")
+        print(f"Chunk {i+1}: {chunk.page_content}")  
     print(f"Split into {len(chunks)} chunks.")
     return chunks
 
@@ -65,8 +106,14 @@ def create_vector_store(chunks, persist_directory: str, collection_name: str):
 def main():
     """Run the document ingestion pipeline: load, split, and create vector store"""
     print("Document Ingestion Pipeline Started")
+
+    if PERSIST_DIR.exists():
+        shutil.rmtree(PERSIST_DIR)
+        print("Old vector store removed.")
+
     documents = load_documents(KB_DIR)
     chunks = split_documents(documents, CHUNK_SIZE, CHUNK_OVERLAP)
+    
     create_vector_store(chunks, PERSIST_DIR, COLLECTION_NAME)
 
 if __name__ == "__main__":

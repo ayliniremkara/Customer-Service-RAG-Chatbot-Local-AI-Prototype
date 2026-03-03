@@ -37,7 +37,7 @@ def render_sidebar() -> dict:
     with st.sidebar:
         st.header("⚙️ Settings")
 
-        top_k = st.slider(
+        top_k = st.slider( 
             "Retrieved chunks (Top-K)",
             min_value=1,
             max_value=10,
@@ -79,10 +79,16 @@ def render_chat_history() -> None:
 
 def get_bot_response(query: str, top_k: int) -> tuple[str, list[str]]:
     chain = get_cached_chain(top_k=top_k)
-    response = chain.invoke({"question": query})
+
+    history = st.session_state.messages[-8:] #Chat history to understand follow-up question
+
+    response = chain.invoke({
+        "question": query,
+        "chat_history": history
+    })
+
     answer = response["answer"]
     sources = response["source_documents"]
-
     return answer, sources
 
 
