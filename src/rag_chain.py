@@ -29,9 +29,9 @@ Guidelines:
 2. If the context contains the information, even if it's not a direct word-for-word match, try to summarize or explain it to help the user.
 3. Be specific. If the context mentions durations (like years), limits (like mileage), or specific conditions, include them in your answer.
 4. If you find relevant information in multiple documents, combine them into a coherent response.
-5. If the answer is absolutely not present in the provided context, ONLY then say: "Sorry, I don't have information about this question."
+5. If the answer is absolutely not present in the provided context, only then say: "Sorry, I don't have information about this question."
 6. If the user asks a follow-up question, use the chat history to understand the context.
-7. Do NOT mention document names inside the answer text. 
+7. Do not mention document names inside the answer text. 
 """
 
 def load_vectorstore():
